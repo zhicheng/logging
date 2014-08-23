@@ -1,7 +1,7 @@
 #ifndef __LOGGING_H__
 #define __LOGGING_H__
 
-#include <time.h>
+#include <stdio.h>
 #include <sys/time.h>
 
 
@@ -41,6 +41,7 @@ typedef struct filter {
 
 typedef struct handler {
 	char        *name;
+	FILE        *file;
 	filter_t    *filter;
 	formatter_t *formatter;
 

@@ -133,7 +133,7 @@ filter_filter(filter_t *filter, record_t *record)
 	return 1;
 }
 
-static void
+static int
 formatter_format(formatter_t *formatter, record_t *record, char *out)
 {
 	int i;
@@ -142,6 +142,7 @@ formatter_format(formatter_t *formatter, record_t *record, char *out)
 	int fmtlen;
 
 	char *fmt;
+	char *ptr = out;
 
 	fmt = formatter->fmt;
 	fmtlen = strlen(formatter->fmt);
@@ -192,12 +193,15 @@ formatter_format(formatter_t *formatter, record_t *record, char *out)
 			skip = 1;
 		}
 	}
-	*out = '\0';
+	*out++ = '\n';
+
+	return (out - ptr);
 }
 
 static void
 handler_emit(handler_t *handler, record_t *record)
 {
+	int  len;
 	char buf[4096];
 	filter_t *filter;
 
@@ -206,8 +210,8 @@ handler_emit(handler_t *handler, record_t *record)
 			return;
 	}
 
-	formatter_format(handler->formatter, record, buf);
-	printf("%s: %s\n", handler->name, buf);
+	len = formatter_format(handler->formatter, record, buf);
+	fwrite(buf, sizeof(char), len, handler->file);
 }
 
 static void

@@ -1,5 +1,7 @@
 #include "logging.h"
 
+#include <stdio.h>
+
 void
 hello()
 {
@@ -55,11 +57,13 @@ main(void)
 			 "%(usecs)d";
 
 	handler1.name      = "HANDLER1";
+	handler1.file      = stdout;
 	handler1.filter    = &filter1;
 	handler1.formatter = &formatter1;
 	handler1.next      = &handler2;
 
 	handler2.name      = "HANDLER2";
+	handler2.file      = stderr;
 	handler2.filter    = &filter2;
 	handler2.formatter = &formatter2;
 	handler2.next      = NULL;
