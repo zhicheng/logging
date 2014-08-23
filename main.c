@@ -1,6 +1,8 @@
 #include "logging.h"
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 void
 hello()
@@ -15,6 +17,9 @@ hello()
 int
 main(void)
 {
+	FILE *file1;
+	FILE *file2;
+
 	logger_t  logger;
 
 	filter_t  filter1;
@@ -26,8 +31,8 @@ main(void)
 	formatter_t formatter1;
 	formatter_t formatter2;
 
+	memset(&logger, 0, sizeof(logger));
 	logger.name = "foo";
-
 	logger_setlevelname(&logger, 21, "HELLO");
 
 	filter1.minlevel = 0;
@@ -38,32 +43,32 @@ main(void)
 	filter2.maxlevel = LOGGING_MAX_LEVEL;
 	filter2.next     = NULL;
 
-	formatter1.datefmt = "%Y-%m-%dT%H:%M:%S.000Z";
-	formatter1.fmt = "%(levelno)d	"
+	formatter1.datefmt = "%Y-%m-%dT%H:%M:%SZ";
+	formatter1.fmt = "%(asctime)s	"
+			 "%(usecs)d	"
+			 "%(levelno)d	"
 			 "%(levelname)s	"
-			 "%(message)s	"
-			 "%(created)d	"
-			 "%(asctime)s	"
-			 "%(msecs)d	"
-			 "%(usecs)d";
+			 "%(message)s";
 
-	formatter2.datefmt = "%Y-%m-%dT%H:%M:%S.000Z";
-	formatter2.fmt = "%(levelno)d,"
+	formatter2.datefmt = "%Y-%m-%dT%H:%M:%SZ";
+	formatter2.fmt = "%(asctime)s,"
+			 "%(usecs)d,"
+			 "%(levelno)d,"
 			 "%(levelname)s,"
-			 "%(message)s,"
-			 "%(created)d,"
-			 "%(asctime)s,"
-			 "%(msecs)d,"
-			 "%(usecs)d";
+			 "%(message)s";
+
+	file1 = fopen("error.log", "a");
 
 	handler1.name      = "HANDLER1";
-	handler1.file      = stdout;
+	handler1.file      = file1;
 	handler1.filter    = &filter1;
 	handler1.formatter = &formatter1;
 	handler1.next      = &handler2;
 
+	file2 = fopen("access.log", "a");
+
 	handler2.name      = "HANDLER2";
-	handler2.file      = stderr;
+	handler2.file      = file2;
 	handler2.filter    = &filter2;
 	handler2.formatter = &formatter2;
 	handler2.next      = NULL;

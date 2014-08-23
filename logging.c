@@ -92,9 +92,14 @@ logging_getlogger(char name[])
 void
 logging_setlogger(logger_t *logger)
 {
+	int i;
+
 	logger_t **next;
 
-	memcpy(logger->level_table, level_table, sizeof(level_table));
+	for (i = 0; i < sizeof(level_table)/sizeof(level_table[0]); i++) {
+		if (logger->level_table[i] == NULL)
+			logger->level_table[i] = level_table[i];
+	}
 	for (next = &loggers; *next != NULL; next = &(*next)->next) {
 		if (strcmp((*next)->name, logger->name) == 0)
 			break;
@@ -134,7 +139,7 @@ filter_filter(filter_t *filter, record_t *record)
 }
 
 static int
-formatter_format(formatter_t *formatter, record_t *record, char *out)
+formatter_format(formatter_t *formatter, record_t *record, char buf[], int buflen)
 {
 	int i;
 	int len;
@@ -142,60 +147,67 @@ formatter_format(formatter_t *formatter, record_t *record, char *out)
 	int fmtlen;
 
 	char *fmt;
-	char *ptr = out;
 
 	fmt = formatter->fmt;
 	fmtlen = strlen(formatter->fmt);
 
-	for (i = 0; i < fmtlen; i += skip) {
+#define min(a,b)	((a) > (b) ? (b) : (a))
+
+	len = 0;
+	for (i = 0; i < fmtlen && len < buflen; i += skip) {
 		if (memcmp(fmt + i, "%%", 2) == 0) {
-			*out++ = '%';
+			buf[len++] = '%';
 			skip = 2;
 		} else if (memcmp(fmt + i, "%(name)s", 8) == 0) {
-			len = strlen(record->name);
-			memcpy(out, record->name, len);
-			out += len;
+			int n = strlen(record->name);
+			n = min(n, buflen - len);
+			memcpy(&buf[len], record->name, n);
+			len += n;
 			skip = 8;
 		} else if (memcmp(fmt + i, "%(levelno)d", 11) == 0) {
-			len = sprintf(out, "%d", record->level);
-			out += len;
+			int n = snprintf(&buf[len], buflen - len, "%d", record->level);
+			len += n;
 			skip = 11;
 		} else if (memcmp(fmt + i, "%(levelname)s", 13) == 0) {
-			len = strlen(record->levelname);
-			memcpy(out, record->levelname, len);
-			out += len;
+			int n = strlen(record->levelname);
+			n = min(n, buflen - len);
+			memcpy(&buf[len], record->levelname, n);
+			len += n;
 			skip = 13;
 		} else if (memcmp(fmt + i, "%(message)s", 11) == 0) {
-			len = strlen(record->message);
-			memcpy(out, record->message, len);
-			out += len;
+			int n = strlen(record->message);
+			n = min(n, buflen - len);
+			memcpy(&buf[len], record->message, n);
+			len += n;
 			skip = 11;
 		} else if (memcmp(fmt + i, "%(created)d", 11) == 0) {
-			len = sprintf(out, "%ld", record->seconds);
-			out += len;
+			int n = snprintf(&buf[len], buflen - len, "%ld", record->seconds);
+			len += n;
 			skip = 11;
 		} else if (memcmp(fmt + i, "%(asctime)s", 11) == 0) {
+			int n;
 			struct tm tm;
 			gmtime_r(&record->seconds, &tm);
-			len = strftime(out, 4096, formatter->datefmt, &tm);
-			out += len;
+			n = strftime(&buf[len], buflen - len, formatter->datefmt, &tm);
+			len += n;
 			skip = 11;
 		} else if (memcmp(fmt + i, "%(msecs)d", 9) == 0) {
-			len = sprintf(out, "%d", record->useconds/1000);
-			out += len;
+			int n = snprintf(&buf[len], buflen - len, "%d", record->useconds/1000);
+			len += n;
 			skip = 9;
 		} else if (memcmp(fmt + i, "%(usecs)d", 9) == 0) {
-			len = sprintf(out, "%d", record->useconds);
-			out += len;
+			int n = snprintf(&buf[len], buflen - len, "%d", record->useconds);
+			len += n;
 			skip = 9;
 		} else {
-			*out++ = fmt[i];
+			buf[len++] = fmt[i];
 			skip = 1;
 		}
 	}
-	*out++ = '\n';
 
-	return (out - ptr);
+#undef min
+
+	return len;
 }
 
 static void
@@ -210,7 +222,9 @@ handler_emit(handler_t *handler, record_t *record)
 			return;
 	}
 
-	len = formatter_format(handler->formatter, record, buf);
+	len = formatter_format(handler->formatter, record, buf, sizeof(buf) - 1);
+	buf[len++] = '\n';
+	printf("len: %d\n", len);
 	fwrite(buf, sizeof(char), len, handler->file);
 }
 
