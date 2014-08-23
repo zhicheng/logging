@@ -136,65 +136,61 @@ filter_filter(filter_t *filter, record_t *record)
 static void
 formatter_format(formatter_t *formatter, record_t *record, char *out)
 {
-	char *ptr1, *ptr2, *ptr3;
+	int i;
+	int len;
+	int skip;
+	int fmtlen;
 
-	ptr1 = formatter->fmt;
-	ptr2 = strstr(formatter->fmt, "%(");
-	ptr3 = strstr(ptr2, ")s");
+	char *fmt;
 
-	while (ptr1 != NULL && ptr2 != NULL && ptr3 != NULL) {
-		char *var;
-		int   varlen;
+	fmt = formatter->fmt;
+	fmtlen = strlen(formatter->fmt);
 
-		memcpy(out, ptr1, ptr2 - ptr1);
-		out += ptr2 - ptr1;
-
-		var = ptr2 + 2;
-		varlen = ptr3 - var;
-
-		if (strncmp(var, "name", varlen) == 0) {
-			memcpy(out, record->name, strlen(record->name));
-			out += strlen(record->name);
-		} else if (strncmp(var, "levelno", varlen) == 0) {
-			int n;
-			n = sprintf(out, "%d", record->level);
-			out += n;
-		} else if (strncmp(var, "levelname", varlen) == 0) {
-			memcpy(out, record->levelname, strlen(record->levelname));
-			out += strlen(record->levelname);
-		} else if (strncmp(var, "message", varlen) == 0) {
-			memcpy(out, record->message, strlen(record->message));
-			out += strlen(record->message);
-		} else if (strncmp(var, "created", varlen) == 0) {
-			int n;
-			n = sprintf(out, "%ld", record->seconds);
-			out += n;
-		} else if (strncmp(var, "asctime", varlen) == 0) {
-			int n;
+	for (i = 0; i < fmtlen; i += skip) {
+		if (memcmp(fmt + i, "%%", 2) == 0) {
+			*out++ = '%';
+			skip = 2;
+		} else if (memcmp(fmt + i, "%(name)s", 8) == 0) {
+			len = strlen(record->name);
+			memcpy(out, record->name, len);
+			out += len;
+			skip = 8;
+		} else if (memcmp(fmt + i, "%(levelno)d", 11) == 0) {
+			len = sprintf(out, "%d", record->level);
+			out += len;
+			skip = 11;
+		} else if (memcmp(fmt + i, "%(levelname)s", 13) == 0) {
+			len = strlen(record->levelname);
+			memcpy(out, record->levelname, len);
+			out += len;
+			skip = 13;
+		} else if (memcmp(fmt + i, "%(message)s", 11) == 0) {
+			len = strlen(record->message);
+			memcpy(out, record->message, len);
+			out += len;
+			skip = 11;
+		} else if (memcmp(fmt + i, "%(created)d", 11) == 0) {
+			len = sprintf(out, "%ld", record->seconds);
+			out += len;
+			skip = 11;
+		} else if (memcmp(fmt + i, "%(asctime)s", 11) == 0) {
 			struct tm tm;
 			gmtime_r(&record->seconds, &tm);
-			n = strftime(out, 4096, formatter->datefmt, &tm);
-			out += n;
-		} else if (strncmp(var, "msecs", varlen) == 0) {
-			int n;
-			n = sprintf(out, "%d", record->useconds/1000);
-			out += n;
-		} else if (strncmp(var, "usecs", varlen) == 0) {
-			int n;
-			n = sprintf(out, "%d", record->useconds);
-			out += n;
+			len = strftime(out, 4096, formatter->datefmt, &tm);
+			out += len;
+			skip = 11;
+		} else if (memcmp(fmt + i, "%(msecs)d", 9) == 0) {
+			len = sprintf(out, "%d", record->useconds/1000);
+			out += len;
+			skip = 9;
+		} else if (memcmp(fmt + i, "%(usecs)d", 9) == 0) {
+			len = sprintf(out, "%d", record->useconds);
+			out += len;
+			skip = 9;
+		} else {
+			*out++ = fmt[i];
+			skip = 1;
 		}
-
-		ptr1 = ptr3 + 2;
-		if (!ptr1)
-			break;
-		ptr2 = strstr(ptr1, "%(");
-		if (!ptr2)
-			break;
-		ptr3 = strstr(ptr2, ")s");
-		if (!ptr3)
-			break;
-		ptr3 = strstr(ptr2, ")s");
 	}
 	*out = '\0';
 }

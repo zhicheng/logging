@@ -37,22 +37,22 @@ main(void)
 	filter2.next     = NULL;
 
 	formatter1.datefmt = "%Y-%m-%dT%H:%M:%S.000Z";
-	formatter1.fmt = "%(levelno)s	"
+	formatter1.fmt = "%(levelno)d	"
 			 "%(levelname)s	"
 			 "%(message)s	"
-			 "%(created)s	"
+			 "%(created)d	"
 			 "%(asctime)s	"
-			 "%(msecs)s	"
-			 "%(usecs)s";
+			 "%(msecs)d	"
+			 "%(usecs)d";
 
 	formatter2.datefmt = "%Y-%m-%dT%H:%M:%S.000Z";
-	formatter2.fmt = "%(levelno)s,"
+	formatter2.fmt = "%(levelno)d,"
 			 "%(levelname)s,"
 			 "%(message)s,"
-			 "%(created)s,"
+			 "%(created)d,"
 			 "%(asctime)s,"
-			 "%(msecs)s,"
-			 "%(usecs)s";
+			 "%(msecs)d,"
+			 "%(usecs)d";
 
 	handler1.name      = "HANDLER1";
 	handler1.filter    = &filter1;
