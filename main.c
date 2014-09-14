@@ -22,14 +22,14 @@ main(void)
 
 	logger_t  logger;
 
-	filter_t  filter1;
-	filter_t  filter2;
+	logger_filter_t  filter1;
+	logger_filter_t  filter2;
 
-	handler_t handler1;
-	handler_t handler2;
+	logger_handler_t handler1;
+	logger_handler_t handler2;
 
-	formatter_t formatter1;
-	formatter_t formatter2;
+	logger_formatter_t formatter1;
+	logger_formatter_t formatter2;
 
 	memset(&logger, 0, sizeof(logger));
 	logger.name = "foo";

@@ -8,15 +8,15 @@
 #define LOGGING_MAX_LEVEL	60
 
 enum {
-	CRITICAL = 50,
-	ERROR    = 40,
-	WARNING  = 30,
-	INFO     = 20,
-	DEBUG    = 10,
-	NOTSET   = 0
+	LOG_CRITICAL = 50,
+	LOG_ERROR    = 40,
+	LOG_WARNING  = 30,
+	LOG_INFO     = 20,
+	LOG_DEBUG    = 10,
+	LOG_NOTSET   = 0
 };
 
-typedef struct record {
+typedef struct logger_record {
 	char *name;
 	int   level;
 	char *levelname;
@@ -24,36 +24,36 @@ typedef struct record {
 
 	time_t      seconds;
 	suseconds_t useconds;
-} record_t;
+} logger_record_t;
 
-typedef struct formatter {
+typedef struct logger_formatter {
 	char *fmt;
 	char *datefmt;
-} formatter_t;
+} logger_formatter_t;
 
-typedef struct filter {
+typedef struct logger_filter {
 	char *name;
 	int   minlevel;	/* include */
 	int   maxlevel; /* include */
 
-	struct filter *next;
-} filter_t;
+	struct logger_filter *next;
+} logger_filter_t;
 
-typedef struct handler {
+typedef struct logger_handler {
 	char        *name;
 	FILE        *file;
-	filter_t    *filter;
-	formatter_t *formatter;
+	logger_filter_t    *filter;
+	logger_formatter_t *formatter;
 
-	struct handler *next;
-} handler_t;
+	struct logger_handler *next;
+} logger_handler_t;
 
 typedef struct logger {
 	char *name;
 	char *level_table[LOGGING_MAX_LEVEL];
 
-	filter_t  *filter;
-	handler_t *handler;
+	logger_filter_t  *filter;
+	logger_handler_t *handler;
 
 	struct logger *next;
 } logger_t;

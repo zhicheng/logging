@@ -6,7 +6,7 @@
 #include <string.h>
 #include <stdarg.h>
 
-char *
+static char *
 level_table[] = {
 	"NOTSET",	/* 0 ~ 9 */
 	"NOTSET",	/* 0 ~ 9 */
@@ -129,7 +129,7 @@ logger_setlevelname(logger_t *logger, int level, char *name)
  * 1 log
  */
 static int
-filter_filter(filter_t *filter, record_t *record)
+filter_filter(logger_filter_t *filter, logger_record_t *record)
 {
 	if (record->level < filter->minlevel)
 		return 0;
@@ -139,7 +139,8 @@ filter_filter(filter_t *filter, record_t *record)
 }
 
 static int
-formatter_format(formatter_t *formatter, record_t *record, char buf[], int buflen)
+formatter_format(logger_formatter_t *formatter, logger_record_t *record,
+	char buf[], int buflen)
 {
 	int i;
 	int len;
@@ -211,11 +212,11 @@ formatter_format(formatter_t *formatter, record_t *record, char buf[], int bufle
 }
 
 static void
-handler_emit(handler_t *handler, record_t *record)
+handler_emit(logger_handler_t *handler, logger_record_t *record)
 {
 	int  len;
 	char buf[4096];
-	filter_t *filter;
+	logger_filter_t *filter;
 
 	for (filter = handler->filter; filter != NULL; filter = filter->next) {
 		if (filter_filter(filter, record) == 0)
@@ -231,10 +232,10 @@ handler_emit(handler_t *handler, record_t *record)
 static void
 log(logger_t *logger, int level, char *msg, va_list args)
 {
-	record_t   record;
-	filter_t  *filter;
-	handler_t *handler;
-	char       buf[4096];
+	logger_record_t   record;
+	logger_filter_t  *filter;
+	logger_handler_t *handler;
+	char              buf[4096];
 
         struct timeval tv;
 
@@ -265,7 +266,7 @@ logger_debug(logger_t *logger, char *msg, ...)
 	va_list args;
 	va_start(args, msg);
 
-	log(logger, DEBUG, msg, args);
+	log(logger, LOG_DEBUG, msg, args);
 
 	va_end(args);
 }
@@ -276,7 +277,7 @@ logger_info(logger_t *logger, char *msg, ...)
 	va_list args;
 	va_start(args, msg);
 
-	log(logger, INFO, msg, args);
+	log(logger, LOG_INFO, msg, args);
 
 	va_end(args);
 }
@@ -287,7 +288,7 @@ logger_warning(logger_t *logger, char *msg, ...)
 	va_list args;
 	va_start(args, msg);
 
-	log(logger, WARNING, msg, args);
+	log(logger, LOG_WARNING, msg, args);
 
 	va_end(args);
 }
@@ -298,7 +299,7 @@ logger_error(logger_t *logger, char *msg, ...)
 	va_list args;
 	va_start(args, msg);
 
-	log(logger, ERROR, msg, args);
+	log(logger, LOG_ERROR, msg, args);
 
 	va_end(args);
 }
@@ -309,7 +310,7 @@ logger_critical(logger_t *logger, char *msg, ...)
 	va_list args;
 	va_start(args, msg);
 
-	log(logger, CRITICAL, msg, args);
+	log(logger, LOG_CRITICAL, msg, args);
 
 	va_end(args);
 }
