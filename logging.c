@@ -225,8 +225,8 @@ handler_emit(logger_handler_t *handler, logger_record_t *record)
 
 	len = formatter_format(handler->formatter, record, buf, sizeof(buf) - 1);
 	buf[len++] = '\n';
-	printf("len: %d\n", len);
 	fwrite(buf, sizeof(char), len, handler->file);
+	fflush(handler->file);
 }
 
 static void
