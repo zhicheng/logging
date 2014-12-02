@@ -219,9 +219,12 @@ handler_emit(logger_handler_t *handler, logger_record_t *record)
 	logger_filter_t *filter;
 
 	for (filter = handler->filter; filter != NULL; filter = filter->next) {
-		if (filter_filter(filter, record) == 0)
-			return;
+		if (filter_filter(filter, record) == 1)
+			break;
 	}
+	
+	if (filter == NULL)
+		return;
 
 	len = formatter_format(handler->formatter, record, buf, sizeof(buf) - 1);
 	buf[len++] = '\n';
@@ -251,9 +254,12 @@ logging_log(logger_t *logger, int level, char *msg, va_list args)
 	record.useconds = tv.tv_usec;
 
 	for (filter = logger->filter; filter != NULL; filter = filter->next) {
-		if (filter_filter(filter, &record) == 0)
-			return;
+		if (filter_filter(filter, &record) == 1)
+			break;
 	}
+
+	if (filter == NULL)
+		return;
 
 	for (handler = logger->handler; handler != NULL; handler = handler->next) {
 		handler_emit(handler, &record);

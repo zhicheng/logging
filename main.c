@@ -22,6 +22,7 @@ main(void)
 
 	logger_t  logger;
 
+	logger_filter_t  filter;
 	logger_filter_t  filter1;
 	logger_filter_t  filter2;
 
@@ -35,12 +36,16 @@ main(void)
 	logger.name = "foo";
 	logger_setlevelname(&logger, 21, "HELLO");
 
-	filter1.minlevel = 0;
+	filter.minlevel = 0;
+	filter.maxlevel = LOGGING_MAX_LEVEL;
+	filter.next     = NULL;
+
+	filter1.minlevel = 30;
 	filter1.maxlevel = LOGGING_MAX_LEVEL;
 	filter1.next     = NULL;
 
-	filter2.minlevel = 20;
-	filter2.maxlevel = LOGGING_MAX_LEVEL;
+	filter2.minlevel = 0;
+	filter2.maxlevel = 29;
 	filter2.next     = NULL;
 
 	formatter1.datefmt = "%Y-%m-%dT%H:%M:%SZ";
@@ -74,13 +79,17 @@ main(void)
 	handler2.next      = NULL;
 
 
-	logger.filter  = NULL;
+	logger.filter  = &filter;
 	logger.handler = &handler1;
 
 	logging_setlogger(&logger);
 
-	logger_debug(&logger, "%s", "hello,world");
-	logger_info(&logger, "%s", "hello,world");
+	logger_debug(&logger, "%s", "hello,debug");
+	logger_info(&logger, "%s", "hello,info");
+	logger_warning(&logger, "%s", "hello,warning");
+	logger_error(&logger, "%s", "hello,error");
+	logger_critical(&logger, "%s", "hello,critical");
+
 	logger_log(&logger, 21, "%s", "hello,world");
 
 	hello();
