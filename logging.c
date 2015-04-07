@@ -193,11 +193,11 @@ formatter_format(logger_formatter_t *formatter, logger_record_t *record,
 			len += n;
 			skip = 11;
 		} else if (memcmp(fmt + i, "%(msecs)d", 9) == 0) {
-			int n = snprintf(&buf[len], buflen - len, "%d", record->useconds/1000);
+			int n = snprintf(&buf[len], buflen - len, "%d", (int)record->useconds/1000);
 			len += n;
 			skip = 9;
 		} else if (memcmp(fmt + i, "%(usecs)d", 9) == 0) {
-			int n = snprintf(&buf[len], buflen - len, "%d", record->useconds);
+			int n = snprintf(&buf[len], buflen - len, "%d", (int)record->useconds);
 			len += n;
 			skip = 9;
 		} else {
@@ -219,9 +219,12 @@ handler_emit(logger_handler_t *handler, logger_record_t *record)
 	logger_filter_t *filter;
 
 	for (filter = handler->filter; filter != NULL; filter = filter->next) {
-		if (filter_filter(filter, record) == 0)
-			return;
+		if (filter_filter(filter, record) == 1)
+			break;
 	}
+	
+	if (filter == NULL)
+		return;
 
 	len = formatter_format(handler->formatter, record, buf, sizeof(buf) - 1);
 	buf[len++] = '\n';
@@ -230,7 +233,7 @@ handler_emit(logger_handler_t *handler, logger_record_t *record)
 }
 
 static void
-log(logger_t *logger, int level, char *msg, va_list args)
+logging_log(logger_t *logger, int level, char *msg, va_list args)
 {
 	logger_record_t   record;
 	logger_filter_t  *filter;
@@ -251,9 +254,12 @@ log(logger_t *logger, int level, char *msg, va_list args)
 	record.useconds = tv.tv_usec;
 
 	for (filter = logger->filter; filter != NULL; filter = filter->next) {
-		if (filter_filter(filter, &record) == 0)
-			return;
+		if (filter_filter(filter, &record) == 1)
+			break;
 	}
+
+	if (filter == NULL)
+		return;
 
 	for (handler = logger->handler; handler != NULL; handler = handler->next) {
 		handler_emit(handler, &record);
@@ -266,7 +272,7 @@ logger_debug(logger_t *logger, char *msg, ...)
 	va_list args;
 	va_start(args, msg);
 
-	log(logger, LOG_DEBUG, msg, args);
+	logging_log(logger, LOG_DEBUG, msg, args);
 
 	va_end(args);
 }
@@ -277,7 +283,7 @@ logger_info(logger_t *logger, char *msg, ...)
 	va_list args;
 	va_start(args, msg);
 
-	log(logger, LOG_INFO, msg, args);
+	logging_log(logger, LOG_INFO, msg, args);
 
 	va_end(args);
 }
@@ -288,7 +294,7 @@ logger_warning(logger_t *logger, char *msg, ...)
 	va_list args;
 	va_start(args, msg);
 
-	log(logger, LOG_WARNING, msg, args);
+	logging_log(logger, LOG_WARNING, msg, args);
 
 	va_end(args);
 }
@@ -299,7 +305,7 @@ logger_error(logger_t *logger, char *msg, ...)
 	va_list args;
 	va_start(args, msg);
 
-	log(logger, LOG_ERROR, msg, args);
+	logging_log(logger, LOG_ERROR, msg, args);
 
 	va_end(args);
 }
@@ -310,7 +316,7 @@ logger_critical(logger_t *logger, char *msg, ...)
 	va_list args;
 	va_start(args, msg);
 
-	log(logger, LOG_CRITICAL, msg, args);
+	logging_log(logger, LOG_CRITICAL, msg, args);
 
 	va_end(args);
 }
@@ -321,7 +327,7 @@ logger_log(logger_t *logger, int level, char *msg, ...)
 	va_list args;
 	va_start(args, msg);
 
-	log(logger, level, msg, args);
+	logging_log(logger, level, msg, args);
 
 	va_end(args);
 }
